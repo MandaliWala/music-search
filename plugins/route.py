@@ -1,25 +1,19 @@
-from aiohttp import web
 import re, math, logging, secrets, mimetypes, time
-import math
-import logging
-import secrets
-import time
-import mimetypes
-from aiohttp.http_exceptions import BadStatusLine
-from Jisshu.bot import multi_clients, work_loads, JisshuBot
-from Jisshu.server.exceptions import FIleNotFound, InvalidHash
-from Jisshu import StartTime, __version__
-from Jisshu.util.custom_dl import ByteStreamer
-from Jisshu.util.time_format import get_readable_time
-from Jisshu.util.render_template import render_page
 from info import *
-
+from aiohttp import web
+from aiohttp.http_exceptions import BadStatusLine
+from Naman.bot import multi_clients, work_loads, NamanBot
+from Naman.server.exceptions import FIleNotFound, InvalidHash
+from Naman import StartTime, __version__
+from Naman.util.custom_dl import ByteStreamer
+from Naman.util.time_format import get_readable_time
+from Naman.util.render_template import render_page
 
 routes = web.RouteTableDef()
 
 @routes.get("/", allow_head=True)
 async def root_route_handler(request):
-    return web.json_response("Filter Bot")
+    return web.json_response("N2FilterBot")
 
 @routes.get(r"/watch/{path:\S+}", allow_head=True)
 async def stream_handler(request: web.Request):

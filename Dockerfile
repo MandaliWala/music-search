@@ -1,10 +1,14 @@
-FROM python:3.12-slim
-WORKDIR /Jisshubot
-RUN apt-get update && \
-    apt-get install --no-install-recommends -y git gcc libjpeg-dev zlib1g-dev && \
-    rm -rf /var/lib/apt/lists/*
-COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip -r requirements.txt --root-user-action=ignore
-COPY . .
-EXPOSE 8080
+# Don't Remove Credit @DigitalGalaxyHQ
+# Ask Doubt on telegram @Spider_Man_02
+FROM python:3.10.8-slim-buster
+
+RUN apt update && apt upgrade -y
+RUN apt install git -y
+COPY requirements.txt /requirements.txt
+
+RUN cd /
+RUN pip3 install -U pip && pip3 install -U -r requirements.txt
+RUN mkdir /Auto-FILTER-BOT
+WORKDIR /Auto-FILTER-BOT
+COPY . /Auto-FILTER-BOT
 CMD ["python", "bot.py"]

@@ -1,10 +1,8 @@
-import sys
-import glob
-import importlib
+# Don't Remove Credit @DigitalGalaxyHQ
+# Ask Doubt on telegram @Spider_Man_02
+
+import sys, glob, importlib, logging, logging.config, pytz, asyncio
 from pathlib import Path
-from pyrogram import idle
-import logging
-import logging.config
 
 # Get logging configurations
 logging.config.fileConfig('logging.conf')
@@ -18,39 +16,32 @@ logging.basicConfig(
 logging.getLogger("aiohttp").setLevel(logging.ERROR)
 logging.getLogger("aiohttp.web").setLevel(logging.ERROR)
 
-
-from pyrogram import Client, __version__
-from pyrogram.raw.all import layer
-from database.ia_filterdb import Media
+from pyrogram import Client, idle 
+from database.ia_filterdb import Media, Media2, choose_mediaDB, db as clientDB
 from database.users_chats_db import db
 from info import *
 from utils import temp
 from typing import Union, Optional, AsyncGenerator
-from pyrogram import types
 from Script import script 
 from datetime import date, datetime 
-import pytz
 from aiohttp import web
+from sample_info import tempDict
 from plugins import web_server
-import pyrogram.utils
-import asyncio
-from pyrogram import idle
-from Jisshu.bot import JisshuBot
-from Jisshu.util.keepalive import ping_server
-from Jisshu.bot.clients import initialize_clients
+
+from Naman.bot import NamanBot
+from Naman.util.keepalive import ping_server
+from Naman.bot.clients import initialize_clients
 
 ppath = "plugins/*.py"
 files = glob.glob(ppath)
-JisshuBot.start()
+NamanBot.start()
 loop = asyncio.get_event_loop()
 
-pyrogram.utils.MIN_CHANNEL_ID = -1009147483647
 
-async def Jisshu_start():
+async def start():
     print('\n')
-    print('Initalizing Jisshu Filter Bot')
-    bot_info = await JisshuBot.get_me()
-    JisshuBot.username = bot_info.username
+    print('Initalizing Your Bot')
+    bot_info = await NamanBot.get_me()
     await initialize_clients()
     for name in files:
         with open(name) as a:
@@ -62,38 +53,48 @@ async def Jisshu_start():
             load = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(load)
             sys.modules["plugins." + plugin_name] = load
-            print("Jisshu Filter Bot Imported => " + plugin_name)
+            print("Naman Imported => " + plugin_name)
     if ON_HEROKU:
         asyncio.create_task(ping_server())
     b_users, b_chats = await db.get_banned()
     temp.BANNED_USERS = b_users
     temp.BANNED_CHATS = b_chats
     await Media.ensure_indexes()
-    me = await JisshuBot.get_me()
+    await Media2.ensure_indexes()
+    #choose the right db by checking the free space
+    stats = await clientDB.command('dbStats')
+    #calculating the free db space from bytes to MB
+    free_dbSize = round(512-((stats['dataSize']/(1024*1024))+(stats['indexSize']/(1024*1024))), 2)
+    if SECONDDB_URI and free_dbSize<10: #if the primary db have less than 10MB left, use second DB.
+        tempDict["indexDB"] = SECONDDB_URI
+        logging.info(f"Since Primary DB have only {free_dbSize} MB left, Secondary DB will be used to store datas.")
+    elif SECONDDB_URI is None:
+        logging.error("Missing second DB URI !\n\nAdd SECONDDB_URI now !\n\nExiting...")
+        exit()
+    else:
+        logging.info(f"Since primary DB have enough space ({free_dbSize}MB) left, It will be used for storing datas.")
+    await choose_mediaDB()
+    me = await NamanBot.get_me()
     temp.ME = me.id
     temp.U_NAME = me.username
     temp.B_NAME = me.first_name
-    temp.B_LINK = me.mention
-    JisshuBot.username = '@' + me.username
-    logging.info(f"{me.first_name} with for Pyrogram v{__version__} (Layer {layer}) started on {me.username}.")
+    logging.info(LOG_STR)
     logging.info(script.LOGO)
     tz = pytz.timezone('Asia/Kolkata')
     today = date.today()
     now = datetime.now(tz)
     time = now.strftime("%H:%M:%S %p")
-    await JisshuBot.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_TXT.format(me.mention, today, time))
+    await NamanBot.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_TXT.format(temp.U_NAME, temp.B_NAME, today, time))
     app = web.AppRunner(await web_server())
     await app.setup()
     bind_address = "0.0.0.0"
     await web.TCPSite(app, bind_address, PORT).start()
     await idle()
-    for admin in ADMINS:
-        await JisshuBot.send_message(chat_id=admin, text=f"<b>{me.mention} ʙᴏᴛ ʀᴇsᴛᴀʀᴛᴇᴅ ✅</b>")
-
 
 
 if __name__ == '__main__':
     try:
-        loop.run_until_complete(Jisshu_start())
+        loop.run_until_complete(start())
     except KeyboardInterrupt:
         logging.info('Service Stopped Bye 👋')
+

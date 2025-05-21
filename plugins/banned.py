@@ -3,7 +3,7 @@ from utils import temp
 from pyrogram.types import Message
 from database.users_chats_db import db
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from info import SUPPORT_CHAT, LOG_CHANNEL
+from info import SUPPORT_CHAT
 
 async def banned_users(_, client, message: Message):
     return (
@@ -18,28 +18,15 @@ async def disabled_chat(_, client, message: Message):
 disabled_group=filters.create(disabled_chat)
 
 
-#@Client.on_message(filters.private & banned_user & filters.incoming)
-#async def ban_reply(bot, message):
-#    ban = await db.get_ban_status(message.from_user.id)
-#    await message.reply(f'Sorry Dude, You are Banned to use Me. \nBan Reason : {ban["ban_reason"]}')
-
 @Client.on_message(filters.private & banned_user & filters.incoming)
 async def ban_reply(bot, message):
     ban = await db.get_ban_status(message.from_user.id)
-    username = message.from_user.username or 'No Username'
-    # Send reply to the user
-    await message.reply(f'Telegram says: [400 PEER_ID_INVALID] - The peer id being used is invalid or not known yet. Make sure you meet the peer before interacting with it')
-    
-    # Send message to the log channel
-    await bot.send_message(
-        LOG_CHANNEL, 
-        f"User ID: {message.from_user.id}\nUsername: @{username} tried to message, but they are banned.\nBan Reason: {ban['ban_reason']}"
-    )
+    await message.reply(f'Sorry Dude, You are Banned to use Me. \nBan Reason: {ban["ban_reason"]}')
 
 @Client.on_message(filters.group & disabled_group & filters.incoming)
 async def grp_bd(bot, message):
     buttons = [[
-        InlineKeyboardButton('Support', url=f'https://t.me/JISSHU_SUPPORT')
+        InlineKeyboardButton('Support', url=f'https://t.me/{SUPPORT_CHAT}')
     ]]
     reply_markup=InlineKeyboardMarkup(buttons)
     vazha = await db.get_chat(message.chat.id)
